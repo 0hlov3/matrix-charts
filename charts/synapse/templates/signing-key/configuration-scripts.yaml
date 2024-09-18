@@ -4,6 +4,6 @@ kind: ConfigMap
 metadata:
   name: {{ include "synapse.fullname" . }}-scripts
   labels:
-    {{- include "synapse.signingKeyJob.labels" . | nindent 4 }}
+    {{- include "synapse.labels" . | nindent 4 }}
 data:
 {{ (.Files.Glob "scripts/*.sh").AsConfig | indent 2 }}
