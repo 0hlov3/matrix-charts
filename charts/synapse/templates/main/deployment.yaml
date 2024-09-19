@@ -9,9 +9,7 @@ metadata:
 spec:
   strategy:
     type: Recreate
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "synapse.selectorLabels" . | nindent 6 }}
@@ -54,7 +52,7 @@ spec:
                     {{- if .Values.config.macaroonSecretKey.existingSecret }}
                     -e "s/@@@macaroonSecretKey@@@/${MACAROON_SECRET_KEY:-}/" \
                     {{- end }}
-                    {{- if .Values.externalPostgresql.enabled}}
+                    {{- if .Values.externalPostgreSQL.enabled }}
                     -e "s/@@@postgresUSER@@@/${SYNAPSE_POSTGRES_USER:-}/" \
                     -e "s/@@@postgresPASSWORD@@@/${SYNAPSE_POSTGRES_PASSWORD:-}/" \
                     {{- end }}
@@ -121,17 +119,17 @@ spec:
                   key: turn-shared-secret
                   name: {{ .Values.config.turn.existingSecret }}
             {{- end }}
-            {{- if .Values.externalPostgresql.enabled }}
+            {{- if .Values.externalPostgreSQL.enabled }}
             - name: SYNAPSE_POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   key: username
-                  name: {{ .Values.externalPostgresql.existingSecret }}
+                  name: {{ .Values.externalPostgreSQL.existingSecret }}
             - name: SYNAPSE_POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   key: password
-                  name: {{ .Values.externalPostgresql.existingSecret }}
+                  name: {{ .Values.externalPostgreSQL.existingSecret }}
             {{- end }}
             {{- if .Values.config.captcha.enabled }}
             {{- if .Values.config.captcha.existingSecret }}
@@ -181,7 +179,7 @@ spec:
               subPath: signing.key
             - name: mediastore
               mountPath: /synapse/data
-            {{- if and .Values.sqlite.enabled not .Values.externalPostgresql.enabled }}
+            {{- if and .Values.sqlite.enabled not .Values.externalPostgreSQL.enabled }}
             - name: sqlite
               mountPath: /synapse/sqlite
             {{- end }}
@@ -212,7 +210,7 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
-        {{- if and .Values.sqlite.enabled not .Values.externalPostgresql.enabled }}
+        {{- if and .Values.sqlite.enabled not .Values.externalPostgreSQL.enabled }}
         - name: sqlite
           persistentVolumeClaim:
             claimName: {{ $fullName }}-sqlite

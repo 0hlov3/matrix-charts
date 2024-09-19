@@ -1,4 +1,4 @@
-{{ if and .Values.sqlite.enabled not .Values.externalPostgresql.enabled }}
+{{ if and .Values.sqlite.enabled not .Values.externalPostgreSQL.enabled }}
 {{ $fullName := include "synapse.fullname" . }}
 ---
 apiVersion: v1

@@ -2,25 +2,13 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-##################################################################
-## S
-## The source of the signing key used by Synapse in federation. ##
-##################################################################
-signingkey:
-  job:
-    enabled: true
-    storeSecretImage:
-      repository: docker.io
-      image: bitnami/kubectl
-      # tag: latest
-      pullPolicy: IfNotPresent
-  existingSecret:
-  existingSecretKey: signing.key
-  resources: {}
-
-###################
-## Synapse Image ##
-###################
+#########################
+## @section Synapse Image
+#########################
+## @param  image.registry Global Docker image registry
+## @param image.repository Global Docker registry secret names as an array
+## @param image.pullPolicy Global default StorageClass for Persistent Volume(s)
+## @param  image.tag DEPRECATED: use global.defaultStorageClass instead
 image:
   registry: docker.io
   repository: matrixdotorg/synapse
@@ -28,49 +16,108 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
-####################
-## Synapse Config ##
-####################
+###############################################################
+## @section Synapse signing Key config
+## The source of the signing key used by Synapse in federation.
+###############################################################
+## @param signingkey.job.enabled Global Docker image registry
+## @param signingkey.job.storeSecretImage.repository Global Docker registry secret names as an array
+## @param signingkey.job.storeSecretImage.image Global default StorageClass for Persistent Volume(s)
+## @param signingkey.job.storeSecretImage.pullPolicy DEPRECATED: use global.defaultStorageClass instead
+## @param signingkey.existingSecret DEPRECATED: use global.defaultStorageClass instead
+## @param signingkey.existingSecretKey DEPRECATED: use global.defaultStorageClass instead
+## @param signingkey.resources DEPRECATED: use global.defaultStorageClass instead
+signingkey:
+  job:
+    enabled: true
+    storeSecretImage:
+      repository: docker.io
+      image: chainguard/kubectl
+      tag: latest
+      pullPolicy: IfNotPresent
+  existingSecret:
+  existingSecretKey: signing.key
+  resources: {}
+
+## @skip metrics
+## @skip networkPolicies
+## @skip imagePullSecrets
+## @skip nameOverride
+## @skip fullnameOverride
+## @skip serviceAccount
+## @skip podAnnotations
+## @skip podSecurityContext
+## @skip securityContext
+## @skip service
+## @skip resources
+## @skip autoscaling
+## @skip nodeSelector
+## @skip tolerations
+## @skip affinity
+
+
+##########################
+## @section Synapse Config
+###########################
+## @param synapse.extraCommands extra Commands to run inside the Synapse Pod
 synapse:
   extraCommands: {}
 config:
-  # This sets the public-facing domain of the server.
-  # The server_name name will appear at the end of usernames and room addresses created on your server. For example if the server_name was example.com, usernames on your server would be in the format @user:example.com
-  # In most cases you should avoid using a matrix specific subdomain such as matrix.example.com or synapse.example.com as the server_name for the same reasons you wouldn't use user@email.example.com as your email address. See here for information on how to host Synapse on a subdomain while preserving a clean server_name.
-  # The server_name cannot be changed later so it is important to configure this correctly before you start Synapse. It should be all lowercase and may contain an explicit port.
-  serverName: synapse.example.com
-  # The public-facing base URL that clients use to access this Homeserver (not including _matrix/...). This is the same URL a user might enter into the 'Custom Homeserver URL' field on their client. If you use Synapse with a reverse proxy, this should be the URL to reach Synapse via the proxy. Otherwise, it should be the URL to reach Synapse's client HTTP listener (see 'listeners' below).
-  # Defaults to https://<server_name>/.
+## @param config.serverName This sets the public-facing domain of the server.
+## The server_name name will appear at the end of usernames and room addresses created on your server. For example if the server_name was example.com, usernames on your server would be in the format @user:example.com
+## In most cases you should avoid using a matrix specific subdomain such as matrix.example.com or synapse.example.com as the server_name for the same reasons you wouldn't use user@email.example.com as your email address. See here for information on how to host Synapse on a subdomain while preserving a clean server_name.
+## The server_name cannot be changed later so it is important to configure this correctly before you start Synapse. It should be all lowercase and may contain an explicit port.
+  serverName: ""
+  ## @param config.publicBaseurl The public-facing base URL that clients use to access this Homeserver (not including _matrix/...). This is the same URL a user might enter into the 'Custom Homeserver URL' field on their client. If you use Synapse with a reverse proxy, this should be the URL to reach Synapse via the proxy. Otherwise, it should be the URL to reach Synapse's client HTTP listener (see 'listeners' below).
   publicBaseurl:
-  webClientLocation:
-  # By default, other servers will try to reach our server on port 8448, which can be inconvenient in some environments.
-  # This option currently defaults to false.
-  serveServerWellknown: true
-  softFileLimit: 0
-  reportStats: false
+  ## @param config.webClientLocation The absolute URL to the web client which / will redirect to. Defaults to none.
+  webClientLocation: ""
+  ## @param config.mediaStore.enabled Enable the media store service in the Synapse master. Defaults to true. Set to false if you are using a separate media store worker.
+  ## @param config.mediaStore.persistence.enabled Enable persistence
+  ## @param config.mediaStore.persistence.size Size for the PV
+  ## @param config.mediaStore.persistence.accessMode Persistent Volume Access Mode
   mediaStore:
     enabled: true
     persistence:
       enabled: true
       size: 5Gi
       accessMode: ReadWriteOnce
+  ## @param config.registration.enabled Enable registration for new users. Defaults to false.
+  ## @param config.registration.withoutVerification Enable registration without email or captcha verification. Note: this option is not recommended, as registration without verification is a known vector for spam and abuse. Defaults to false. Has no effect unless enable_registration is also enabled.
   registration:
     enabled: false
     withoutVerification: false
+  ## @param config.database.txnLimit  gives the maximum number of transactions to run per connection before reconnecting. Defaults to 0, which means no limit.
+  ## @param config.database.cpMin used to configure the Twisted connection pool
+  ## @param config.database.cpMax used to configure the Twisted connection pool
   database:
     txnLimit: 0
     cpMin: 5
     cpMax: 10
+  ## @param config.trustedKeyServers[0].server_name The trusted servers to download signing keys from.
   trustedKeyServers:
     - server_name: "matrix.org"
+  ## @param config.registrationSharedSecret.existingSecret If set, allows registration of standard or admin accounts by anyone who has the shared secret, even if enable_registration is not set.
   registrationSharedSecret:
     existingSecret: synapse-registration-secret
+  ## @param config.macaroonSecretKey.enabled If none is specified, the registration_shared_secret is used, if one is given; otherwise, a secret key is derived from the signing key.
+  ## @param config.macaroonSecretKey.existingSecret If none is specified, the registration_shared_secret is used, if one is given; otherwise, a secret key is derived from the signing key.
   macaroonSecretKey:
     enabled: true
     existingSecret: synapse-macaroon-secret
+  ## @param config.turn.enabled If none is specified, the registration_shared_secret is used, if one is given; otherwise, a secret key is derived from the signing key.
+  ## @param config.turn.existingSecret If none is specified, the registration_shared_secret is used, if one is given; otherwise, a secret key is derived from the signing key.
   turn:
     enabled: false
     existingSecret: synapse-turn-secret
+  ## @param config.email.enabled
+  ## @param config.email.existingSecret
+  ## @param config.email.forceTLS
+  ## @param config.email.requireTransportSecurity
+  ## @param config.email.enableTLS
+  ## @param config.email.notifFrom
+  ## @param config.email.enableNotifs
+  ## @param config.email.client_base_url
   email:
     enabled: false
     existingSecret: synapse-mail-secret
@@ -80,34 +127,53 @@ config:
     notifFrom: "Your Friendly %(app)s homeserver <noreply@example.com>"
     enableNotifs: true
     client_base_url: "http://localhost/riot"
+  ## @param config.captcha.enabled
+  ## @param config.captcha.existingSecret
   captcha:
     enabled: false
     existingSecret: synapse-captcha-secret
-
+## @param extraConfig
 extraConfig: {}
 
-#####################
-## Database Config ##
-#####################
+
+##########################
+## @section Database Config
+###########################
+## @param sqlite.enabled Defines if SQLite should be Used
+## @param sqlite.persistence.enabled Enable persistence
+## @param sqlite.persistence.size Size for the PV
+## @param sqlite.persistence.accessMode Persistent Volume Access Mode
 sqlite:
   enabled: false
   persistence:
     enabled: true
     size: 5Gi
     accessMode: ReadWriteOnce
-
-postgreSQLexternal:
+## @param externalPostgreSQL.enabled
+## @param externalPostgreSQL.host
+## @param externalPostgreSQL.port
+## @param externalPostgreSQL.database
+## @param externalPostgreSQL.existingSecret
+externalPostgreSQL:
   enabled: true
   host: postgresql.postgresql.svc.cluster.local
   port: 5432
   database: synapse
   existingSecret: synapse-postgresql-secret
 
-##################
-## Redis Config ##
-##################
+########################
+## @section Redis Config
+########################
+## @param redis.enabled Defines if Redis should be Used
+## @param redis.auth.enabled Defines if Redis should be Used
+## @param redis.auth.existingSecret Defines the Secret for Redis credentials
+## @param redis.auth.existingSecretPasswordKey Defines the key where to get the Credentials from
+## @param redis.architecture
+## @param redis.master.persistence.enabled Enable persistence
+## @param redis.master.persistence.size Size for the PV
+## @param redis.master.service.ports.redis Persistent Volume Access Mode
 redis:
-  enabled: true
+  enabled: false
   auth:
     enabled: true
     existingSecret: synapse-redis-secret
@@ -178,9 +244,30 @@ service:
   metrics:
     port: 9090
 
+## @section Ingress
+## Synapse ingress parameters
+## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+##
 ingress:
+  ## @param ingress.enabled Enable ingress record generation for Keycloak
+  ##
   enabled: false
+  ## @param ingress.className IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
   className: ""
+  ## @param ingress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## For a full list of possible ingress annotations, please see
+  ## ref: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ##
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  #
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -191,6 +278,7 @@ ingress:
     #   add_header X-Content-Type-Options nosniff;
     #   add_header Referrer-Policy 'same-origin';
     #   add_header Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()";
+  ## @skip ingress.hosts
   hosts:
     - host: chart-example.local
       paths:
@@ -200,10 +288,15 @@ ingress:
           pathType: ImplementationSpecific
         - path: /.well-known/matrix/
           pathType: ImplementationSpecific
+  ## @param ingress.tls Enable TLS configuration for the hostname defined at ingress.hostname parameter
+  ## TLS certificates will be retrieved from a TLS secret with name: {{- printf "%s-tls" .Values.ingress.hostname }}
+  ## You can use the ingress.secrets parameter to create this TLS secret or relay on cert-manager to create it
+  ## e.g:
+  ## tls: [ ]
+  ##   - secretName: tls-synapse-general
+  ##     hosts:
+  ##       - chart-example.local
   tls: []
-  #  - secretName: tls-synapse-general
-  #    hosts:
-  #      - chart-example.local
 
 resources:
   limits:
@@ -215,8 +308,8 @@ resources:
 
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
+  minReplicas: 2
+  maxReplicas: 4
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 

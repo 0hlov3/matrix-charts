@@ -31,8 +31,8 @@ spec:
               else
                 generate_signing_key -o /synapse/keys/signing.key
               fi
-          image: "{{ .Values.signingkey.job.generateImage.repository }}/{{ .Values.signingkey.job.generateImage.image }}:{{ .Values.signingkey.job.generateImage.tag | default "latest" }}"
-          imagePullPolicy: {{ .Values.signingkey.job.generateImage.pullPolicy }}
+          image: "{{ .Values.image.registry}}/{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           name: signing-key-generate
           resources:
             {{- toYaml .Values.signingkey.resources | nindent 12 }}
@@ -49,8 +49,8 @@ spec:
           env:
             - name: SECRET_NAME
               value: {{ $secretName }}
-          image: "{{ .Values.signingkey.job.publishImage.repository }}/{{ .Values.signingkey.job.publishImage.image }}:{{ .Values.signingkey.job.publishImage.tag | default "latest" }}"
-          imagePullPolicy: {{ .Values.signingkey.job.publishImage.pullPolicy }}
+          image: "{{ .Values.signingkey.job.storeSecretImage.repository }}/{{ .Values.signingkey.job.storeSecretImage.image }}:{{ .Values.signingkey.job.storeSecretImage.tag }}"
+          imagePullPolicy: {{ .Values.signingkey.job.storeSecretImage.pullPolicy }}
           name: signing-key-upload
           resources:
             {{- toYaml .Values.signingkey.resources | nindent 12 }}
@@ -62,7 +62,7 @@ spec:
               name: synapse-keys
               readOnly: true
       restartPolicy: Never
-      serviceAccount: {{ $name }}
+      serviceAccountName: {{ $name }}
       volumes:
         - name: scripts
           configMap:

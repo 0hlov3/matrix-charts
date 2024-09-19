@@ -16,14 +16,12 @@ data:
     ## Server                                                                                           ##
     ## https://matrix-org.github.io/synapse/latest/usage/configuration/config_documentation.html#server ##
     ######################################################################################################
-    server_name: {{ required "You need to specify a serverName" .Values.config.serverName | quote }}
-    public_baseurl: {{ .Values.config.publicBaseurl | default (printf "https://%s" (.Values.publicServerName | default .Values.serverName)) | quote }}
+    server_name: {{ required "You need to specify a serverName for Example synapse.example.com or example.com" .Values.config.serverName | quote }}
+    public_baseurl: {{ .Values.config.publicBaseurl | default (printf "https://%s" (.Values.config.publicServerName | default .Values.config.serverName)) | quote }}
     pid_file: /homeserver.pid
     {{- if .Values.config.webClientLocation }}
     web_client_location: {{ .Values.config.webClientLocation }}
     {{- end }}
-    serve_server_wellknown: {{ .Values.config.serveServerWellknown }}
-    soft_file_limit: {{ .Values.config.softFileLimit }}
     log_config: "/synapse/config/log.yaml"
     report_stats: {{ required "You need to specify config.reportStats" .Values.config.reportStats }}
     ## Ports ##
